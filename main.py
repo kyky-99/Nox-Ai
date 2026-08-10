@@ -7,6 +7,12 @@ load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
+print("TOKEN FOUND:", TOKEN is not None)
+print("TOKEN LENGTH:", len(TOKEN) if TOKEN else 0)
+
+if not TOKEN:
+    raise ValueError("DISCORD_TOKEN is missing!")
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -32,4 +38,4 @@ async def on_message(message):
 async def ping(ctx):
     await ctx.send("🏓 Pong! NOX AI is online.")
 
-bot.run(TOKEN)
+bot.run(TOKEN, log_handler=None)
