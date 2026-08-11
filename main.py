@@ -1,17 +1,17 @@
 import os
 import discord
+import google.generativeai as genai
 from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-print("TOKEN FOUND:", TOKEN is not None)
-print("TOKEN LENGTH:", len(TOKEN) if TOKEN else 0)
+genai.configure(api_key=GEMINI_API_KEY)
 
-if not TOKEN:
-    raise ValueError("DISCORD_TOKEN is missing!")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -19,10 +19,22 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+SYSTEM_PROMPT = """
+Tum NOX AI ho.
+
+Rules:
+- Hamesha Hindi/Hinglish me reply do.
+- Funny aur savage personality rakho.
+- Agar koi gaali de to smart aur witty comeback do.
+- Kabhi bhi offensive ya hateful mat banna.
+- Short replies do (1-3 lines).
+- Apne aap ko NOX AI bolo.
+"""
+
 @bot.event
 async def on_ready():
-    print(f"{bot.user} is online!")
-    await bot.change_presence(activity=discord.Game("THE NOX AI 😈"))
+    print(f"{bot.user} Online!")
+    await bot.change_presence(activity=discord.Game("😈 Savage NOX AI"))
 
 @bot.event
 async def on_message(message):
@@ -30,12 +42,27 @@ async def on_message(message):
         return
 
     if bot.user in message.mentions:
-        await message.reply("😈 Kya hua? NOX AI ko mention kiya? Ab bol, kya kaam hai?")
+        user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
+
+        if user_msg == "":
+            user_msg = "Hello"
+
+        try:
+            response = model.generate_content(
+                SYSTEM_PROMPT + "\nUser: " + user_msg
+            )
+
+            reply = response.text[:1900]
+
+        except Exception:
+            reply = "😅 Oye! Mera AI dimaag abhi thoda busy hai, thodi der baad try kar."
+
+        await message.reply(reply)
 
     await bot.process_commands(message)
 
 @bot.command()
 async def ping(ctx):
-    await ctx.send("🏓 Pong! NOX AI is online.")
+    await ctx.send("🏓 Pong! NOX AI Online 😈")
 
-bot.run(TOKEN, log_handler=None)
+bot.run(DISCORD_TOKEN)
